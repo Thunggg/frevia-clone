@@ -1,11 +1,11 @@
 meta {
-  name: Login
+  name: Refresh Token
   type: http
-  seq: 3
+  seq: 4
 }
 
 post {
-  url: {{baseUrl}}/auth/login
+  url: {{baseUrl}}/auth/refresh-token
   body: json
   auth: none
 }
@@ -16,8 +16,7 @@ headers {
 
 body:json {
   {
-    "email": "admin@gmail.com",
-    "password": "123456"
+    "refreshToken": "{{refreshToken}}"
   }
 }
 
