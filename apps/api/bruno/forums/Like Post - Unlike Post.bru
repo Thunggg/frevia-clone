@@ -1,11 +1,11 @@
 meta {
-  name: Delete Post
+  name: Like Post / Unlike Post
   type: http
-  seq: 8
+  seq: 9
 }
 
-delete {
-  url: {{baseUrl}}/api/forums/posts/5
+post {
+  url: {{baseUrl}}/api/forums/posts/4/like
   body: none
   auth: inherit
 }
