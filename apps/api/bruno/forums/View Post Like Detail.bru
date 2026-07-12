@@ -1,19 +1,14 @@
 meta {
-  name: Like Post / Unlike Post
+  name: View Post Like Detail
   type: http
-  seq: 9
+  seq: 10
 }
 
-post {
+get {
   url: {{baseUrl}}/api/forums/posts/4/like
   body: none
-  auth: bearer
+  auth: inherit
 }
-
-auth:bearer {
-  token: {{accessToken}}
-}
-
 
 settings {
   encodeUrl: true
