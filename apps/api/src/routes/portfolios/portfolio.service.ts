@@ -7,6 +7,7 @@ import {
   PortfolioForbiddenException,
   PortfolioNotFoundException,
   UnableToUpdatePortfolioException,
+  UnableToDeletePortfolioException,
 } from './portfolio.error';
 import { RoleName, AddPortfolioType, UpdatePortfolioType } from '@shared/types';
 
@@ -125,6 +126,28 @@ export class PortfolioService {
         throw error;
       }
       throw UnableToUpdatePortfolioException();
+    }
+  }
+
+  async deletePortfolio(portfolioId: number, currentUserId: number) {
+    try {
+      const portfolio =
+        await this.portfolioRepository.findPortfolioWithProfile(portfolioId);
+      if (!portfolio) {
+        throw PortfolioNotFoundException();
+      }
+
+      if (portfolio.freelancerProfile.profile.userId !== currentUserId) {
+        throw PortfolioForbiddenException();
+      }
+
+      await this.portfolioRepository.deletePortfolio(portfolioId);
+      return { message: 'Portfolio deleted successfully.' };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw UnableToDeletePortfolioException();
     }
   }
 }

@@ -6,4 +6,5 @@ export const PortfolioMessage = {
   PORTFOLIO_FORBIDDEN: "You can only edit your own portfolios.",
   PORTFOLIO_NOT_FOUND: "Portfolio not found.",
   PORTFOLIO_FAILED_TO_UPDATE: "Unable to update portfolio. Please try again later.",
+  PORTFOLIO_FAILED_TO_DELETE: "Unable to delete portfolio. Please try again later.",
 } as const;

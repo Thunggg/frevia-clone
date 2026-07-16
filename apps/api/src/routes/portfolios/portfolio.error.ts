@@ -37,3 +37,11 @@ export const UnableToUpdatePortfolioException = () =>
       path: 'portfolios',
     },
   ]);
+
+export const UnableToDeletePortfolioException = () =>
+  new InternalServerErrorException([
+    {
+      message: PortfolioMessage.PORTFOLIO_FAILED_TO_DELETE,
+      path: 'portfolios',
+    },
+  ]);

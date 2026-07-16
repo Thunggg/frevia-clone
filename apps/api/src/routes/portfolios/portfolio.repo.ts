@@ -107,4 +107,15 @@ export class PortfolioRepository {
       },
     });
   }
+
+  async deletePortfolio(portfolioId: number) {
+    return this.prisma.portfolioItem.update({
+      where: {
+        id: portfolioId,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
 }

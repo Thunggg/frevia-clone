@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -53,5 +54,13 @@ export class PortfolioController {
     @Body() body: UpdatePortfolioDto,
   ) {
     return this.portfolioService.updatePortfolio(id, currentUserId, body);
+  }
+
+  @Delete('portfolios/:id')
+  async deletePortfolio(
+    @UserActive('userId') currentUserId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.portfolioService.deletePortfolio(id, currentUserId);
   }
 }
