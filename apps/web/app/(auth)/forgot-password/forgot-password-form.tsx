@@ -11,43 +11,38 @@ import {
 } from "@repo/ui/components/shadcn/card";
 import {
   Field,
-  FieldContent,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldTitle,
 } from "@repo/ui/components/shadcn/field";
 import { Input } from "@repo/ui/components/shadcn/input";
-import { RegisterBodySchema, RoleName } from "@shared/types";
-import { Controller, useForm } from "react-hook-form";
-import * as z from "zod";
-import { authApiRequest } from "@/apiRequests/auth";
-import { handleErrorApi } from "@/lib/utils";
-import { toastError, toastSuccess } from "@repo/ui/components/shadcn/toast";
-import { ApiFail } from "@/lib/http";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@repo/ui/components/shadcn/radio-group";
-import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
-import { useEffect, useState } from "react";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
 } from "@repo/ui/components/shadcn/input-group";
+import { toastError, toastSuccess } from "@repo/ui/components/shadcn/toast";
+import {
+  ForgotPasswordBodySchema,
+  TypeOfVerificationCode,
+} from "@shared/types";
+import { Controller, useForm } from "react-hook-form";
+import * as z from "zod";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authApiRequest } from "@/apiRequests/auth";
+import { handleErrorApi } from "@/lib/utils";
+import { ApiFail } from "@/lib/http";
 import { Eye, EyeOff } from "lucide-react";
 
-export function RegisterForm() {
+export function ForgotPasswordForm() {
   const router = useRouter();
-
-  const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -62,25 +57,25 @@ export function RegisterForm() {
     return () => clearInterval(interval);
   }, [countdown]);
 
-  const form = useForm<z.infer<typeof RegisterBodySchema>>({
-    resolver: zodResolver(RegisterBodySchema),
+  const form = useForm<z.infer<typeof ForgotPasswordBodySchema>>({
+    resolver: zodResolver(ForgotPasswordBodySchema),
     defaultValues: {
       email: "",
-      password: "",
-      confirmPassword: "",
       code: "",
-      fullName: "",
-      role: RoleName.FREELANCER,
+      newPassword: "",
+      confirmNewPassword: "",
     },
   });
 
-  async function onSubmit(payload: z.infer<typeof RegisterBodySchema>) {
+  async function onSubmit(payload: z.infer<typeof ForgotPasswordBodySchema>) {
     try {
       setIsLoading(true);
-      const res = await authApiRequest.register(payload);
+      const res = await authApiRequest.forgotPassword(payload);
 
       if (res.success) {
-        toastSuccess({ message: "Register successful" });
+        toastSuccess({
+          message: res.data.message ?? "Password reset successful",
+        });
         form.reset();
         router.push("/login");
       }
@@ -92,7 +87,7 @@ export function RegisterForm() {
           duration: 3000,
         });
       } else {
-        toastError({ message: "Register failed" });
+        toastError({ message: "Reset password failed" });
       }
     } finally {
       setIsLoading(false);
@@ -101,11 +96,12 @@ export function RegisterForm() {
 
   async function sendOtp() {
     try {
+      setIsSendingOtp(true);
       const email = form.getValues("email");
 
       const res = await authApiRequest.sendOtp({
         email,
-        type: "EMAIL_VERIFICATION",
+        type: TypeOfVerificationCode.PASSWORD_RESET,
       });
 
       if (res.success) {
@@ -115,58 +111,40 @@ export function RegisterForm() {
     } catch (error: unknown) {
       if (error instanceof ApiFail) {
         handleErrorApi({ error: error.response, setError: form.setError });
+      } else {
+        toastError({ message: "Send OTP failed" });
       }
+    } finally {
+      setIsSendingOtp(false);
     }
   }
 
   return (
     <Card className="w-full sm:max-w-md mx-auto my-auto">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Register</CardTitle>
+        <CardTitle className="text-2xl">Forgot Password</CardTitle>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Enter your email and set a new password
+        </p>
       </CardHeader>
       <CardContent>
-        <form
-          id="form-rhf-demo"
-          onSubmit={form.handleSubmit(onSubmit, (errors) =>
-            console.log(errors),
-          )}
-        >
+        <form id="forgot-password-form" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
-            <Controller
-              name="fullName"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-demo-email">
-                    Full Name
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id="form-rhf-demo-title"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Login button not working on mobile"
-                    autoComplete="off"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
             <Controller
               name="email"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-demo-email">
+                  <FieldLabel htmlFor="forgot-password-email">
                     Email address
                   </FieldLabel>
                   <Input
                     {...field}
-                    id="form-rhf-demo-title"
+                    id="forgot-password-email"
+                    type="email"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Login button not working on mobile"
-                    autoComplete="off"
+                    placeholder="Enter your email"
+                    autoComplete="email"
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -174,31 +152,36 @@ export function RegisterForm() {
                 </Field>
               )}
             />
+
             <Controller
-              name="password"
+              name="newPassword"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="register-password">Password</FieldLabel>
+                  <FieldLabel htmlFor="forgot-password-new-password">
+                    New Password
+                  </FieldLabel>
                   <div className="relative">
                     <Input
                       {...field}
-                      id="register-password"
-                      type={showPassword ? "text" : "password"}
+                      id="forgot-password-new-password"
+                      type={showNewPassword ? "text" : "password"}
                       aria-invalid={fieldState.invalid}
-                      placeholder="Enter your password"
+                      placeholder="Enter new password"
                       autoComplete="new-password"
                       className="pr-10"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() => setShowNewPassword(!showNewPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                       aria-label={
-                        showPassword ? "Hide password" : "Show password"
+                        showNewPassword
+                          ? "Hide new password"
+                          : "Show new password"
                       }
                     >
-                      {showPassword ? (
+                      {showNewPassword ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
                         <Eye className="h-4 w-4" />
@@ -212,22 +195,21 @@ export function RegisterForm() {
               )}
             />
             <Controller
-              name="confirmPassword"
+              name="confirmNewPassword"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="register-confirm-password">
+                  <FieldLabel htmlFor="forgot-password-confirm-password">
                     Confirm Password
                   </FieldLabel>
                   <div className="relative">
                     <Input
                       {...field}
-                      id="register-confirm-password"
+                      id="forgot-password-confirm-password"
                       type={showConfirmPassword ? "text" : "password"}
                       aria-invalid={fieldState.invalid}
-                      placeholder="Confirm your password"
+                      placeholder="Confirm new password"
                       autoComplete="new-password"
-                      className="pr-10"
                     />
                     <button
                       type="button"
@@ -254,31 +236,33 @@ export function RegisterForm() {
                 </Field>
               )}
             />
+
             <Controller
               name="code"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-demo-email">
-                    Otp Code
+                  <FieldLabel htmlFor="forgot-password-otp">
+                    OTP Code
                   </FieldLabel>
                   <InputGroup>
                     <InputGroupInput
                       {...field}
+                      id="forgot-password-otp"
                       placeholder="OTP Code"
                       maxLength={6}
+                      aria-invalid={fieldState.invalid}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, ""); // Loại bỏ mọi ký tự không phải số
+                        const value = e.target.value.replace(/\D/g, "");
                         field.onChange(value);
                       }}
-                      aria-invalid={fieldState.invalid}
                     />
                     <InputGroupAddon align="inline-end">
                       <InputGroupButton
                         type="button"
                         variant="secondary"
                         onClick={() => sendOtp()}
-                        disabled={countdown > 0}
+                        disabled={countdown > 0 || isSendingOtp}
                       >
                         {countdown > 0 ? `Resend in ${countdown}s` : "Send OTP"}
                       </InputGroupButton>
@@ -290,79 +274,31 @@ export function RegisterForm() {
                 </Field>
               )}
             />
-            <Controller
-              name="role"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-demo-email">Role</FieldLabel>
-                  <RadioGroup
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    className="max-w-md"
-                  >
-                    <FieldLabel htmlFor="plus-plan">
-                      <Field orientation="horizontal">
-                        <FieldContent>
-                          <FieldTitle>Freelancer</FieldTitle>
-                          <FieldDescription>
-                            For freelancers who want to find jobs.
-                          </FieldDescription>
-                        </FieldContent>
-                        <RadioGroupItem
-                          checked={field.value === RoleName.FREELANCER}
-                          value={RoleName.FREELANCER}
-                          id="plus-plan"
-                        />
-                      </Field>
-                    </FieldLabel>
-                    <FieldLabel htmlFor="pro-plan">
-                      <Field orientation="horizontal">
-                        <FieldContent>
-                          <FieldTitle>Employer</FieldTitle>
-                          <FieldDescription>
-                            For employers who want to hire freelancers.
-                          </FieldDescription>
-                        </FieldContent>
-                        <RadioGroupItem value={RoleName.CLIENT} id="pro-plan" />
-                      </Field>
-                    </FieldLabel>
-                  </RadioGroup>
-                </Field>
-              )}
-            />
-            <FieldGroup className="w-56 cursor-pointer">
-              <Field orientation="horizontal">
-                <Checkbox
-                  id="terms-checkbox-basic"
-                  name="terms-checkbox-basic"
-                  className="cursor-pointer"
-                  onClick={() => setIsTermsAccepted(!isTermsAccepted)}
-                />
-                <FieldLabel
-                  htmlFor="terms-checkbox-basic"
-                  className="cursor-pointer"
-                >
-                  Accept terms and conditions
-                </FieldLabel>
-              </Field>
-            </FieldGroup>
           </FieldGroup>
         </form>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex flex-col gap-4">
         <Field orientation="horizontal">
           <Button type="button" variant="outline" onClick={() => form.reset()}>
             Reset
           </Button>
           <Button
             type="submit"
-            form="form-rhf-demo"
-            disabled={!isTermsAccepted || isLoading}
+            form="forgot-password-form"
+            disabled={isLoading}
           >
             Submit
           </Button>
         </Field>
+        <p className="text-sm text-muted-foreground text-center">
+          Remember your password?{" "}
+          <Link
+            href="/login"
+            className="font-semibold text-primary hover:text-primary/90"
+          >
+            Log in
+          </Link>
+        </p>
       </CardFooter>
     </Card>
   );
