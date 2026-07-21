@@ -1,11 +1,11 @@
 meta {
-  name: Get Bookmark Status
+  name: View Client Job Detail
   type: http
-  seq: 2
+  seq: 3
 }
 
 get {
-  url: {{baseUrl}}/manage-jobs/jobs/{{jobSlug}}/bookmark
+  url: {{baseUrl}}/manage-jobs/{{jobId}}
   body: none
   auth: bearer
 }
@@ -19,5 +19,5 @@ headers {
 }
 
 vars:pre-request {
-  jobSlug: e-commerce-website
+  jobId: 1
 }
