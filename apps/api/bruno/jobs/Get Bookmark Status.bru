@@ -1,17 +1,21 @@
 meta {
-  name: Bookmark Job
+  name: Get Bookmark Status
   type: http
-  seq: 1
+  seq: 2
 }
 
-post {
+get {
   url: {{baseUrl}}/manage-jobs/jobs/{{jobId}}/bookmark
   body: none
-  auth: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
 }
 
 headers {
-  Authorization: Bearer {{accessToken}}
+  Accept: application/json
 }
 
 vars:pre-request {
